@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  kafka-connect:
+    image: landoop/fast-data-dev:cp3.3.0
+    container_name: kafka-connect
+    ports:
+      - "8083:8083"
+      - "9092:9092"
+    environment:
+      ADV_HOST: kafka-connect
+      RUNTESTS: 0
+      CONNECT_PLUGIN_PATH: /data/jars
+    volumes:
+      - ./jars:/data/jars
+    networks:
+      - kafka-net
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - kafka-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: twitter_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - kafka-net
+
+  sender:
+    build:
+      context: ./sender
+      dockerfile: Dockerfile_sender
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - mosquitto
+    networks:
+      - kafka-net
+
+  superset:
+    build:
+      context: .
+      dockerfile: ./superset/Dockerfile_superset
+    container_name: superset
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./superset:/app/superset_home
+    networks:
+      - kafka-net
+    environment:
+      SUPERSET_CONFIG_PATH: /app/superset_home/superset_config.py
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - kafka-connect
+      - mysql
+      - redis
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - kafka-net
+
+
+volumes:
+  mysql_data:
+
+networks:
+  kafka-net:
