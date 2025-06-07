@@ -1,0 +1,15 @@
+# sender/Dockerfile_sender
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copiamos el script
+COPY sender.py .
+
+# Copiamos toda la carpeta data
+RUN mkdir data
+
+# Instalamos dependencias
+RUN pip install numpy paho-mqtt
+
+CMD ["python", "sender.py"]
