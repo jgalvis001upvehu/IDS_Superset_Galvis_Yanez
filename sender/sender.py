@@ -35,7 +35,8 @@ with open(json_file, 'r') as file:
                 "tweet": text,
                 "timestamp": formatted
             }
-            client.publish("tweets", json.dumps(message))
+            client.publish("tweets", json.dumps(message, ensure_ascii=False)) # TODO Verificar si funciona 
+            #client.publish("tweets", json.dumps(message).encode('utf-8'))
             print("Publicado:", message)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
