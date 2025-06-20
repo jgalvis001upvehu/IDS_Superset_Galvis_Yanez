@@ -2,3 +2,6 @@
 /data/mbti_labels.csv
 /data/tweets1.json
 /data/users1.json
+/env/
+druid_kafka_spec.json
+superset/__pycache__/
