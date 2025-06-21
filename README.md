@@ -136,7 +136,7 @@ We fill in the required fields for ingestion. In Bootstrap servers, we must spec
 
 3. We access *Superset* through localhost:8088 and fill in the username and password fields (admin - admin). 
 
-![Superset](img/Superset.png)
+![Superset](img/superset.png)
 
 We navigate to the Databases section, where we should be able to see our tweets data in order to generate visualizations.
 
@@ -146,6 +146,9 @@ We navigate to the Databases section, where we should be able to see our tweets 
 
 1. jq
 2. Docker
+
+
+
 
 
 
