@@ -20,7 +20,7 @@ To achieve this, a distributed architecture has been designed to simulate a prod
 
 A Python script *(sender.py*) is responsible for reading tweets from the tweets.json file and publishing them one by one to an *MQTT* topic named *tweets*.
 
-### 1.2 Broker MQTT: Mosquitto 
+#### 1.2 Broker MQTT: Mosquitto 
 
 It acts as an intermediary between the publishers and subscribers of the messaging topic, receiving the messages published to the *tweets*   topic and routing them to the respective subscribers.
 
@@ -126,17 +126,17 @@ docker run -d --name *Druid* \
 
 We navigate to the Load Data section and connect our data via Apache *Kafka*.
 
-![*Druid* *Kafka*](druid_kafka.png)
+![Druid Kafka](druid_kafka.png)
 
 We fill in the required fields for ingestion. In Bootstrap servers, we must specify the address of the *Kafka* broker that *Druid* should connect to in order to consume messages — in our case, *Kafka*:9092. In Topic, we specify the *Kafka* topic from which to read the messages. Then, we click Apply.
 
 
-![*Druid* fields](druid_fields.png)
+![Druid fields](druid_fields.png)
 
 
 3. We access *Superset* through localhost:8088 and fill in the username and password fields (admin - admin). 
 
-![*Superset*](*Superset*.png)
+![Superset](Superset.png)
 
 We navigate to the Databases section, where we should be able to see our tweets data in order to generate visualizations.
 
@@ -152,7 +152,7 @@ We navigate to the Databases section, where we should be able to see our tweets 
 
 
 
-## Author
+## Authors
 
 Diego Yáñez
 
