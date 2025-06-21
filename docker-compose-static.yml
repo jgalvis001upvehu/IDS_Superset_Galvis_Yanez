@@ -1,67 +1,72 @@
 version: '3.8'
 
+# Define a custom bridge network for inter-service communication
 networks:
   kafka-net:
     driver: bridge
 
 services:
 
+  # 🐝 Apache Hive service
   hive:
     build:
       context: ./hive/
       dockerfile: Dockerfile_hive
     container_name: hive
     ports:
-      - "10000:10000"  # HiveServer2
-      - "10002:10002"  # Metastore
+      - "10000:10000"  # Port for HiveServer2 (JDBC)
+      - "10002:10002"  # Port for Hive Metastore
     environment:
       SERVICE_NAME: hiveserver2
     volumes:
-      - ./data:/workspace/data
+      - ./data:/workspace/data  # Mount local data directory
     networks:
-      - kafka-net
+      - kafka-net  # Connect to the custom network
 
+  # 🚀 Hive initialization service
   hive-init:
     build:
       context: ./hive/
       dockerfile: Dockerfile_hive
     container_name: hive-init
     depends_on:
-      - hive
+      - hive  # Wait for the hive service to be up first
     volumes:
-      - ./data:/workspace/data
-      - ./hive_pipeline.sh:/workspace/hive_pipeline.sh
+      - ./data:/workspace/data  # Access the same data as Hive
+      - ./hive_pipeline.sh:/workspace/hive_pipeline.sh  # Mount the data loading script
     entrypoint: >
       bash -c "
-        echo '⏳ Esperando que Hive esté activo...';
+        echo '⏳ Waiting for Hive to be ready...';
+        # Wait until HiveServer2 is ready by testing JDBC connection
         until beeline -u jdbc:hive2://hive:10000 -n hive -e 'SHOW DATABASES;' >/dev/null 2>&1; do
-          echo 'Esperando HiveServer2...';
+          echo 'Waiting for HiveServer2...';
           sleep 5;
         done;
         chmod +x /workspace/hive_pipeline.sh;
-        /workspace/hive_pipeline.sh;
-        echo '✅ Carga de datos en Hive finalizada.'"
+        /workspace/hive_pipeline.sh;  # Execute the data loading script
+        echo '✅ Hive data loading complete.'"
     networks:
       - kafka-net
 
+  # 📊 Apache Superset for data visualization
   superset:
     build:
       context: ./superset
       dockerfile: Dockerfile_superset
     container_name: superset
     ports:
-      - "8088:8088"
+      - "8088:8088"  # Superset UI accessible on localhost:8088
     volumes:
-      - ./data:/workspace/data
-      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+      - ./data:/workspace/data  # Share data folder
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py  # Custom Superset config
     networks:
       - kafka-net
     depends_on:
-      - hive
-      - hive-init
+      - hive  # Requires Hive to be up
+      - hive-init  # Wait for data to be loaded in Hive
     command: >
       bash -c "
-        superset db upgrade &&
+        superset db upgrade &&  # Apply DB migrations
         superset fab create-admin --username admin --firstname Admin --lastname User --email admin@superset.com --password admin &&
-        superset init &&
-        superset run -h 0.0.0.0 -p 8088"
+        superset init &&  # Initialize Superset
+        superset run -h 0.0.0.0 -p 8088"  # Run the web server on port 8088
