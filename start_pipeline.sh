@@ -2,7 +2,7 @@
 set -e
 
 echo -e "\n Iniciando contenedores con Docker Compose...\n"
-docker compose up -d
+docker compose up --build -d
 
 echo -e "\n Esperando a que Kafka Connect levante (8083)..."
 until curl --silent --output /dev/null --head --fail http://localhost:8083; do
@@ -15,19 +15,16 @@ echo -e "\n Kafka Connect listo."
 echo -e "\n🔍 Verificando si el conector mqtt-source ya existe..."
 EXISTS=$(curl -s http://localhost:8083/connectors | jq -r '.[]' | grep -w mqtt-source || true)
 
-# Payload del conector MQTT
+# Configuración del conector
 CONNECTOR_PAYLOAD='{
-  "connector.class": "com.datamountaineer.streamreactor.connect.mqtt.source.MqttSourceConnector",
-  "tasks.max": "1",
-  "connect.mqtt.hosts": "tcp://mosquitto:1883",
-  "connect.mqtt.topics": "tweets",
-  "connect.mqtt.client_id": "mqtt-kafka-bridge",
-  "connect.mqtt.clean": "true",
-  "connect.mqtt.timeout": "1000",
-  "connect.mqtt.service.quality": "1",
-  "connect.mqtt.kcql": "INSERT INTO tweets SELECT * FROM tweets",
+  "connector.class": "io.confluent.connect.mqtt.MqttSourceConnector",
+  "tasks.max": 1,
+  "mqtt.server.uri": "tcp://mosquitto:1883",
+  "mqtt.topics": "tweets",
+  "kafka.topic": "tweets",
   "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
-  "key.converter": "org.apache.kafka.connect.storage.StringConverter"
+  "confluent.topic.bootstrap.servers": "kafka:9092",
+  "confluent.topic.replication.factor": 1
 }'
 
 # Registra o actualiza el conector
@@ -62,14 +59,30 @@ sleep 5
 echo -e "\n Primeros mensajes recibidos en el topic Kafka «tweets»:\n"
 docker exec -it kafka-connect \
   kafka-console-consumer \
-    --bootstrap-server localhost:9092 \
+    --bootstrap-server kafka:9092 \
     --topic tweets \
     --from-beginning \
     --property print.value=true \
-    --max-messages 10
+    --max-messages 3
+
+    
 echo -e "\n Pipeline MQTT → Kafka operativo."
 
-docker run -p 8081:8081 -p 8082:8082 -p 8888:8888 --network kafka-net -it fokkodriesprong/docker-druid
+docker run -d --name druid \
+  --network kafka-net \
+  -p 8888:8888 -p 8082:8082 -p 8081:8081 \
+  -e DRUID_XMS=512m -e DRUID_XMX=1g \
+  -e DRUID_EXTENSIONS_LOADLIST='["druid-kafka-indexing-service"]' \
+  fokkodriesprong/docker-druid
 
+echo -n "⏳ Esperando Druid Router"
+until curl -sf http://localhost:8888/status/health ; do printf '.'; sleep 5; done
+echo " ✔︎"
 
+# publica el supervisor …
+curl -sfX POST http://localhost:8081/druid/indexer/v1/supervisor \
+     -H 'Content-Type: application/json' \
+     -d @druid_kafka_spec.json | jq .
+
+echo -e "\n✅  Todo listo."
 
