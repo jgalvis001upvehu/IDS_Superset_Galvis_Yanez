@@ -1,21 +1,21 @@
 #!/bin/bash
 set -e
 
-echo -e "\n Iniciando contenedores con Docker Compose...\n"
+echo -e "\n Starting containers with Docker Compose...\n"
 docker compose up --build -d
 
-echo -e "\n Esperando a que Kafka Connect levante (8083)..."
+echo -e "\n Waiting for Kafka Connect to be ready (8083)..."
 until curl --silent --output /dev/null --head --fail http://localhost:8083; do
   printf '.'
   sleep 5
 done
-echo -e "\n Kafka Connect listo."
+echo -e "\n Kafka Connect is ready."
 
-# Verifica si el conector ya existe
-echo -e "\n🔍 Verificando si el conector mqtt-source ya existe..."
+# Check if the connector already exists
+echo -e "\n Checking if the mqtt-source connector already exists..."
 EXISTS=$(curl -s http://localhost:8083/connectors | jq -r '.[]' | grep -w mqtt-source || true)
 
-# Configuración del conector
+# Connector configuration
 CONNECTOR_PAYLOAD='{
   "connector.class": "io.confluent.connect.mqtt.MqttSourceConnector",
   "tasks.max": 1,
@@ -27,36 +27,36 @@ CONNECTOR_PAYLOAD='{
   "confluent.topic.replication.factor": 1
 }'
 
-# Registra o actualiza el conector
+# Register or update the connector
 if [[ -n "$EXISTS" ]]; then
-  echo -e "\n Conector ya existe."
+  echo -e "\n Connector already exists."
   RESPONSE=$(curl -s -X PUT http://localhost:8083/connectors/mqtt-source/config \
               -H "Content-Type: application/json" \
               -d "$CONNECTOR_PAYLOAD")
 else
-  echo -e "\n Registrando nuevo conector MQTT → Kafka..."
+  echo -e "\n Registering new MQTT → Kafka connector..."
   RESPONSE=$(curl -s -X POST http://localhost:8083/connectors \
               -H "Content-Type: application/json" \
               -d '{"name": "mqtt-source", "config": '"$CONNECTOR_PAYLOAD"'}')
 fi
 
-echo -e "\n Respuesta al registrar el conector:\n$RESPONSE"
+echo -e "\n Connector registration response:\n$RESPONSE"
 
-# Esperar a que el conector esté en estado RUNNING
-echo -e "\n Esperando a que el conector entre en estado RUNNING…"
+# Wait for the connector to reach RUNNING state
+echo -e "\n Waiting for the connector to enter RUNNING state…"
 until [[ "$(curl -s http://localhost:8083/connectors/mqtt-source/status | jq -r '.connector.state' 2>/dev/null)" == "RUNNING" ]]; do
   sleep 3
 done
-echo " Conector RUNNING."
+echo " Connector is RUNNING."
 
-# Mostrar estado detallado
-echo -e "\n Estado detallado del conector:"
+# Show detailed connector status
+echo -e "\n Detailed connector status:"
 curl -s http://localhost:8083/connectors/mqtt-source/status | jq .
 
 sleep 5
 
-# Mostrar primeros mensajes del topic
-echo -e "\n Primeros mensajes recibidos en el topic Kafka «tweets»:\n"
+# Show first messages from the topic
+echo -e "\n First messages received on Kafka topic «tweets»:\n"
 docker exec -it kafka-connect \
   kafka-console-consumer \
     --bootstrap-server kafka:9092 \
@@ -66,7 +66,7 @@ docker exec -it kafka-connect \
     --max-messages 3
 
     
-echo -e "\n Pipeline MQTT → Kafka operativo."
+echo -e "\n Kafka is working."
 
 docker run -d --name druid \
   --network kafka-net \
@@ -75,14 +75,13 @@ docker run -d --name druid \
   -e DRUID_EXTENSIONS_LOADLIST='["druid-kafka-indexing-service"]' \
   fokkodriesprong/docker-druid
 
-echo -n "⏳ Esperando Druid Router"
+echo -n "Waiting for Druid Router"
 until curl -sf http://localhost:8888/status/health ; do printf '.'; sleep 5; done
-echo " ✔︎"
+echo "Droud Router is operational"
 
-# publica el supervisor …
+# Publish the supervisor …
 curl -sfX POST http://localhost:8081/druid/indexer/v1/supervisor \
      -H 'Content-Type: application/json' \
      -d @druid_kafka_spec.json | jq .
 
-echo -e "\n✅  Todo listo."
-
+echo -e "\n All set."
