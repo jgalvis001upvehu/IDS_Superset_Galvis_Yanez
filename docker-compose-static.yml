@@ -5,6 +5,7 @@ networks:
     driver: bridge
 
 services:
+# ───────────────────────────── Hive, HiveServer and Metastore ─────────────────────────────
 
   hive:
     build:
@@ -20,7 +21,7 @@ services:
       - ./data:/workspace/data
     networks:
       - kafka-net
-
+# ───────────────────────────── Hive-Init: Hive for formatting data ─────────────────────────────
   hive-init:
     build:
       context: ./hive/
@@ -43,7 +44,7 @@ services:
         echo '✅ Dataloading on Hive finished.'"
     networks:
       - kafka-net
-
+  # ───────────────────────────── Superset ─────────────────────────────
   superset:
     build:
       context: ./superset
