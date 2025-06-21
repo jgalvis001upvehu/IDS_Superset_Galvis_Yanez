@@ -148,7 +148,61 @@ We navigate to the Databases section, where we should be able to see our tweets 
 2. Docker
 
 
+## 📁📊 Static Data (users1.json, edges1.json, mbti_labels.csv)
 
+This part of the project focuses on the ingestion, transformation, and analysis of static data from local files: users1.json, edges1.json, and mbti_labels.csv. These files contain structured information about Twitter users, their following, and their MBTI personality types, respectively.
+
+The goal is to convert this information into analytical tables that can be queried and visualized through tools such as Apache Superset, using Hive as a distributed query engine.
+
+To achieve this, an automated pipeline was implemented to prepare the data, load it into Hive, and make it available in Superset for further analysis.
+
+### 🛠️ Procedure
+
+1. Preprocessing with jQ
+
+An automated script (hive_pipeline.sh) transforms JSON files into JSONL (JSON Lines) format for easier processing by Hive. It also makes adjustments to lists encoded as comma-separated strings.
+
+![Docker compose up](img/hive-init-flowchart.png)
+
+2. Folder Organization
+
+Structured folders are created within /workspace/data/ to facilitate the orderly ingestion of each dataset.
+
+3. Loading to Hive
+
+Once Hive is up and running, the hive-init container runs the load script, which creates the necessary tables in Hive and loads the transformed data.
+
+4. Access from Superset
+
+Finally, Superset connects to the Hive database and allows exploration and visualization of this static data.
+
+To activate this section of the pipeline:
+
+```bash docker-compose -f docker-compose-static.yml ```.
+
+Once the process runs successfully, access the network where the project is being deployed from a web browser. By default, it launches on localhost:8088. The login, by default, is defined as the user admin and the password admin. This can be modified in the superset service in docker-compose-static.yaml if desired.
+
+Once you log in, this is what the Superset welcome page should look like. To connect to the Hive database, click Settings, then Database Connections:
+
+![Docker compose up](img/superset1.png)
+
+Then, click on CREATE DATABASE:
+
+![Docker compose up](img/superset2.png)
+
+A pop-up window will appear, where you must select Apache Hive from the drop-down list. After that, in the SQLAlchemy URI* box, enter the connection link to where Hive is located on your internal network. By default, this is used: hive://hive@hive:10000/default  
+
+![Docker compose up](img/superset3.png)
+
+Click Connect, and you're now connected to Superset by Hive.
+
+To run SQL queries and process data, access SQL Lab through the main menu:
+
+![Docker compose up](img/superset4.png)
+
+The database is selected and then the desired queries can be performed:
+
+![Docker compose up](img/superset5.png)
 
 
 
