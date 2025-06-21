@@ -1,5 +1,11 @@
 FROM apache/superset:latest
 
 USER root
-RUN pip install pymysql
+
+RUN pip install \
+    pymysql \
+    pyhive \
+    thrift \
+    thrift_sasl
+
 USER superset
