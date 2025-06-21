@@ -1,0 +1,67 @@
+version: '3.8'
+
+networks:
+  kafka-net:
+    driver: bridge
+
+services:
+
+  hive:
+    build:
+      context: ./hive/
+      dockerfile: Dockerfile_hive
+    container_name: hive
+    ports:
+      - "10000:10000"  # HiveServer2
+      - "10002:10002"  # Metastore
+    environment:
+      SERVICE_NAME: hiveserver2
+    volumes:
+      - ./data:/workspace/data
+    networks:
+      - kafka-net
+
+  hive-init:
+    build:
+      context: ./hive/
+      dockerfile: Dockerfile_hive
+    container_name: hive-init
+    depends_on:
+      - hive
+    volumes:
+      - ./data:/workspace/data
+      - ./hive_pipeline.sh:/workspace/hive_pipeline.sh
+    entrypoint: >
+      bash -c "
+        echo '⏳ Waiting for Hive...';
+        until beeline -u jdbc:hive2://hive:10000 -n hive -e 'SHOW DATABASES;' >/dev/null 2>&1; do
+          echo 'Esperando HiveServer2...';
+          sleep 5;
+        done;
+        chmod +x /workspace/hive_pipeline.sh;
+        /workspace/hive_pipeline.sh;
+        echo '✅ Dataloading on Hive finished.'"
+    networks:
+      - kafka-net
+
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile_superset
+    container_name: superset
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./data:/workspace/data
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+    networks:
+      - kafka-net
+    depends_on:
+      - hive
+      - hive-init
+    command: >
+      bash -c "
+        superset db upgrade &&
+        superset fab create-admin --username admin --firstname Admin --lastname User --email admin@superset.com --password admin &&
+        superset init &&
+        superset run -h 0.0.0.0 -p 8088"
