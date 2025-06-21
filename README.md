@@ -142,6 +142,9 @@ We navigate to the Databases section, where we should be able to see our tweets 
 
 ![Superset_tweets](img/superset_tweets.png)
 
+
+**NOTE:** Although all services were successfully launched, we were unable to complete the ingestion into *Druid*. As a workaround, the dynamic data was loaded into *Hive* to enable visualizations.
+
 ### Requirements
 
 1. jq
@@ -155,6 +158,12 @@ This part of the project focuses on the ingestion, transformation, and analysis 
 The goal is to convert this information into analytical tables that can be queried and visualized through tools such as Apache Superset, using Hive as a distributed query engine.
 
 To achieve this, an automated pipeline was implemented to prepare the data, load it into Hive, and make it available in Superset for further analysis.
+
+#### 2.1 Apache Hive
+
+Apache Hive is a data warehouse system built on Hadoop that enables the analysis of large volumes of data using a SQL-like language called HiveQL. Hive translates these queries into MapReduce jobs, facilitating interaction with data stored in structured formats.
+
+In this project, Hive acts as a repository and query engine for static data, allowing tools like Superset to easily explore and visualize it. Thanks to its SQL support, it is ideal for integrating processed data into analytical environments accessible to non-technical users.
 
 ### 🛠️ Procedure
 
@@ -207,6 +216,38 @@ The database is selected and then the desired queries can be performed:
 
 
 
+## Visualizations
+
+Once the temporal and static data processing pipeline has been executed, the data becomes available for visualization and analysis in **Superset**.
+
+In this web-based visualization tool, you can run **Hive-SQL** queries to explore, transform, and aggregate the stored data. This enables the creation of interactive charts and customized dashboards that help identify relevant patterns and trends.
+
+![Hive SQL query](img/hive-sql_query.png)
+
+These queries allow us to explore and filter the database to generate visualizations that address key business questions. For example:
+
+- Who are the users with the highest number of interactions?
+- Which MBTI personality type generates the most content on Twitter?
+- Which profile accumulates the most retweets, favorites, or mentions?
+- What is the distribution of interactions across different personality types?
+
+Below is a dashboard designed to help answer these questions:
+
+![Superset dashboard](img/dashboard.png)
+
+- **Top Left:** A pie chart titled **Tweet Distribution by MBTI** displays the proportion of tweets posted by users of each of the 16 MBTI personality types. It highlights **INTJ**, **ENFP**, **INFJ**, and **INFP** as the most active personalities in terms of posting tweets.
+
+- **Top Right:** A table titled **Top 5 Most Engaged Users on Twitter**, sorted by total number of interactions. Each row shows the user’s *screen name* along with their retweets, favorites, mentions, and total engagement.
+
+- **Bottom Left:** A horizontal bar chart titled **Total Favorites by MBTI Personality** presents the total number of likes received by each MBTI type. **INTJ** stands out with the most favorites, a result aligned with their high tweet activity. It also surpasses **ENFP** and **INFJ**, despite their similar posting volume.
+
+- **Bottom Right:** A vertical bar chart titled **Total Retweets by MBTI Personality** displays the total retweet count per personality. Here, **ENFP** leads in generating engagement, followed by **ENFJ**, **INFP**, **INTP**, and again **INTJ**.
+
+> These charts could be enhanced—for instance, by sorting bar charts in descending order to improve visual impact. However, the main goal was to demonstrate successful data integration, interaction, and visualization using **Superset**.
+
+The dashboard is shown again below in higher resolution, exported directly from Hive. The earlier screenshot was only meant to verify that the service was deployed.
+
+![Superset dashboard - HD](img/dashboard_hd.jpg)
 
 
 ## Authors
