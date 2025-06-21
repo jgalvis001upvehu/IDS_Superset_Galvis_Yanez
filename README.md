@@ -122,25 +122,25 @@ docker run -d --name *Druid* \
 
 2. Once *Druid* has been initialized, we can access it at localhost:8888.
 
-![*Druid*](Druid_up.png)
+![Druid](img/Druid_up.png)
 
 We navigate to the Load Data section and connect our data via Apache *Kafka*.
 
-![Druid Kafka](druid_kafka.png)
+![Druid Kafka](img/druid_kafka.png)
 
 We fill in the required fields for ingestion. In Bootstrap servers, we must specify the address of the *Kafka* broker that *Druid* should connect to in order to consume messages — in our case, *Kafka*:9092. In Topic, we specify the *Kafka* topic from which to read the messages. Then, we click Apply.
 
 
-![Druid fields](druid_fields.png)
+![Druid fields](img/druid_fields.png)
 
 
 3. We access *Superset* through localhost:8088 and fill in the username and password fields (admin - admin). 
 
-![Superset](Superset.png)
+![Superset](img/Superset.png)
 
 We navigate to the Databases section, where we should be able to see our tweets data in order to generate visualizations.
 
-![Superset_tweets](superset_tweets.png)
+![Superset_tweets](img/superset_tweets.png)
 
 ### Requirements
 
