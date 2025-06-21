@@ -216,7 +216,7 @@ The database is selected and then the desired queries can be performed:
 
 
 
-## Visualizations
+## 📊 Visualizations
 
 Once the temporal and static data processing pipeline has been executed, the data becomes available for visualization and analysis in **Superset**.
 
