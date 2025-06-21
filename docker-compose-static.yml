@@ -5,7 +5,6 @@ networks:
     driver: bridge
 
 services:
-# ───────────────────────────── Hive, HiveServer and Metastore ─────────────────────────────
 
   hive:
     build:
@@ -21,7 +20,7 @@ services:
       - ./data:/workspace/data
     networks:
       - kafka-net
-# ───────────────────────────── Hive-Init: Hive for formatting data ─────────────────────────────
+
   hive-init:
     build:
       context: ./hive/
@@ -34,17 +33,17 @@ services:
       - ./hive_pipeline.sh:/workspace/hive_pipeline.sh
     entrypoint: >
       bash -c "
-        echo '⏳ Waiting for Hive...';
+        echo '⏳ Esperando que Hive esté activo...';
         until beeline -u jdbc:hive2://hive:10000 -n hive -e 'SHOW DATABASES;' >/dev/null 2>&1; do
           echo 'Esperando HiveServer2...';
           sleep 5;
         done;
         chmod +x /workspace/hive_pipeline.sh;
         /workspace/hive_pipeline.sh;
-        echo '✅ Dataloading on Hive finished.'"
+        echo '✅ Carga de datos en Hive finalizada.'"
     networks:
       - kafka-net
-  # ───────────────────────────── Superset ─────────────────────────────
+
   superset:
     build:
       context: ./superset
